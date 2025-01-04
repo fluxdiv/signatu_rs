@@ -220,7 +220,7 @@ fn modify_line(l: LineType<'_>, args: &ArgMatches) -> () {
                     // start > 2 incase "remove" is "U:" etc.
                     if start > 2usize {
                         // replace -1 && + 1 to remove quotes 
-                        line.replace_range((start - 1)..=(remove.len() + 1), "");
+                        line.replace_range((start-1)..=(start + remove.len()), "");
                     }
                 }
             }

@@ -4,17 +4,16 @@ use test_types::{
     test, ArgType, TestParams, AddArgs, UpdateArgs, ListArgs
 };
 
-// macro_rules! tinfo {
-//     () => {
-//         format!(
-//             "\x1b[31m|  File: {}    Line: {}    Col: {}  |\x1b[0m",
-//             file!(),
-//             line!(),
-//             column!()
-//         )
-//     };
-// }
-
+macro_rules! tinfo {
+    () => {
+        format!(
+            // "\x1b[31m|  File: {}    Line: {}  |\x1b[0m",
+            "|  File: {}  Line: {}  |",
+            file!(),
+            line!(),
+        )
+    };
+}
 
 pub fn test_add_new(config_path: &str) {
     println!("=====================================================");
@@ -209,3 +208,399 @@ pub fn test_add_new(config_path: &str) {
     test(p8);
 
 }
+
+pub fn test_updates(config_path: &str) {
+    println!("=====================================================");
+    println!("=========================================== update");
+
+    let mut config_arg: [&str; 2] = ["--config-path", config_path];
+    let mut args: Vec<[&str; 2]> = Vec::with_capacity(6);
+    
+    //------------------------------------
+    //-------- Should pass cases ---------
+
+    // updating an added key from test_add_new (--identity add_new_key)
+    // add a username & email
+    args.push(["--au", "somebody"]);
+    args.push(["--ae", "somebody@y.com"]);
+    let uargs1 = UpdateArgs {
+        config_path: Some(config_arg),
+        identity: Some(["--identity", "add new key"]),
+        args: Some(args.clone())
+    };
+
+    let a1 = ArgType::ShouldPass(&uargs1);
+    let p1 = TestParams {
+        ctx: format!("{} updating added key with 1 uname + 1 email", tinfo!()),
+        verbose: false,
+        args: a1
+    };
+    test(p1);
+
+    // assert findable by new email
+    let list_args = ListArgs::Find {
+        config_path: Some(config_path),
+        verbose: true,
+        args: Some(vec![["-E", "somebody@y.com"]]),
+    };
+    let la1 = ArgType::ShouldPass(&list_args);
+    let lap1 = TestParams {
+        ctx: format!("{} Check updated identity findable by new email", tinfo!()),
+        verbose: false,
+        args: la1,
+    };
+    test(lap1);
+
+    // assert findable by new username
+    let list_args2 = ListArgs::Find {
+        config_path: Some(config_path),
+        verbose: true,
+        args: Some(vec![["-U", "somebody"]]),
+    };
+    let la2 = ArgType::ShouldPass(&list_args2);
+    let lap2 = TestParams {
+        ctx: format!("{} Check updated identity findable by new username", tinfo!()),
+        verbose: false,
+        args: la2,
+    };
+    test(lap2);
+
+
+    // remove added email
+    args.clear();
+    args.push(["--re", "somebody@y.com"]);
+    let uargs2 = UpdateArgs {
+        config_path: Some(config_arg),
+        identity: Some(["--identity", "add new key"]),
+        args: Some(args.clone())
+    };
+
+    let a2 = ArgType::ShouldPass(&uargs2);
+    let p2 = TestParams {
+        ctx: format!("{} removing 1 email", tinfo!()),
+        verbose: true,
+        args: a2
+    };
+    test(p2);
+
+    // assert not findable by removed email
+    let list_args = ListArgs::Find {
+        config_path: Some(config_path),
+        verbose: true,
+        args: Some(vec![["-E", "somebody@y.com"]]),
+    };
+    let la2 = ArgType::ShouldFail(&list_args);
+    let lap2 = TestParams {
+        ctx: format!("{} Check updated identity not findable by removed email", tinfo!()),
+        verbose: true,
+        args: la2,
+    };
+    test(lap2);
+
+    // remove added username
+    args.clear();
+    args.push(["--ru", "somebody"]);
+    let uargs3 = UpdateArgs {
+        config_path: Some(config_arg),
+        identity: Some(["--identity", "add new key"]),
+        args: Some(args.clone())
+    };
+
+    let a3 = ArgType::ShouldPass(&uargs3);
+    let p3 = TestParams {
+        ctx: format!("{} removing 1 username", tinfo!()),
+        verbose: false,
+        args: a3
+    };
+    test(p3);
+
+    // assert not findable by removed username
+    let la3 = ArgType::ShouldFail(&list_args2);
+    let lap3 = TestParams {
+        ctx: format!("{} Check updated identity not findable by removed username", tinfo!()),
+        verbose: false,
+        args: la3,
+    };
+    test(lap3);
+
+
+
+    // --------------------
+    // remove all
+    // -- emails
+    // add email
+    args.clear();
+    args.push(["--ae", "somebody@y.com"]);
+    let uargs1 = UpdateArgs {
+        config_path: Some(config_arg),
+        identity: Some(["--identity", "add new key"]),
+        args: Some(args.clone())
+    };
+
+    let a1 = ArgType::ShouldPass(&uargs1);
+    let p1 = TestParams {
+        ctx: format!("{} updating added key with 1 email", tinfo!()),
+        verbose: false,
+        args: a1
+    };
+    test(p1);
+    // assert findable by new email
+    let list_args = ListArgs::Find {
+        config_path: Some(config_path),
+        verbose: true,
+        args: Some(vec![["-E", "somebody@y.com"]]),
+    };
+    let la1 = ArgType::ShouldPass(&list_args);
+    let lap1 = TestParams {
+        ctx: format!("{} Check updated identity findable by new email", tinfo!()),
+        verbose: false,
+        args: la1,
+    };
+    test(lap1);
+
+    // remove all emails
+    args.clear();
+    args.push(["--remove-all-emails", ""]);
+    let uargs1 = UpdateArgs {
+        config_path: Some(config_arg),
+        identity: Some(["--identity", "add new key"]),
+        args: Some(args.clone())
+    };
+    let a1 = ArgType::ShouldPass(&uargs1);
+    let p1 = TestParams {
+        ctx: format!("{} removing all emails", tinfo!()),
+        verbose: false,
+        args: a1
+    };
+    test(p1);
+    // assert not findable by removed email
+    let la2 = ArgType::ShouldFail(&list_args);
+    let lap2 = TestParams {
+        ctx: format!("{} Check updated identity not findable by removed email", tinfo!()),
+        verbose: false,
+        args: la2,
+    };
+    test(lap2);
+    // assert adding works after clearing all emails
+    args.clear();
+    args.push(["--ae", "somebody@y.com"]);
+    let uargs1 = UpdateArgs {
+        config_path: Some(config_arg),
+        identity: Some(["--identity", "add new key"]),
+        args: Some(args.clone())
+    };
+
+    let a1 = ArgType::ShouldPass(&uargs1);
+    let p1 = TestParams {
+        ctx: format!("{} updating added key with 1 email", tinfo!()),
+        verbose: false,
+        args: a1
+    };
+    test(p1);
+    // assert findable by new email
+    let list_args = ListArgs::Find {
+        config_path: Some(config_path),
+        verbose: true,
+        args: Some(vec![["-E", "somebody@y.com"]]),
+    };
+    let la1 = ArgType::ShouldPass(&list_args);
+    let lap1 = TestParams {
+        ctx: format!("{} Check updated identity findable by new email", tinfo!()),
+        verbose: false,
+        args: la1,
+    };
+    test(lap1);
+
+
+    // -- usernames remove all
+    // add username
+    args.clear();
+    args.push(["--au", "somebody"]);
+    let uargs1 = UpdateArgs {
+        config_path: Some(config_arg),
+        identity: Some(["--identity", "add new key"]),
+        args: Some(args.clone())
+    };
+
+    let a1 = ArgType::ShouldPass(&uargs1);
+    let p1 = TestParams {
+        ctx: format!("{} updating added key with 1 username", tinfo!()),
+        verbose: false,
+        args: a1
+    };
+    test(p1);
+    // assert findable by new username
+    let list_args = ListArgs::Find {
+        config_path: Some(config_path),
+        verbose: true,
+        args: Some(vec![["-U", "somebody"]]),
+    };
+    let la1 = ArgType::ShouldPass(&list_args);
+    let lap1 = TestParams {
+        ctx: format!("{} Check updated identity findable by new username", tinfo!()),
+        verbose: false,
+        args: la1,
+    };
+    test(lap1);
+
+    // remove all usernames
+    args.clear();
+    args.push(["--remove-all-usernames", ""]);
+    let uargs1 = UpdateArgs {
+        config_path: Some(config_arg),
+        identity: Some(["--identity", "add new key"]),
+        args: Some(args.clone())
+    };
+    let a1 = ArgType::ShouldPass(&uargs1);
+    let p1 = TestParams {
+        ctx: format!("{} removing all usernames", tinfo!()),
+        verbose: false,
+        args: a1
+    };
+    test(p1);
+    // assert not findable by removed username
+    let list_args = ListArgs::Find {
+        config_path: Some(config_path),
+        verbose: true,
+        args: Some(vec![["-U", "somebody"]]),
+    };
+    let la2 = ArgType::ShouldFail(&list_args);
+    let lap2 = TestParams {
+        ctx: format!("{} Check updated identity not findable by removed username", tinfo!()),
+        verbose: false,
+        args: la2,
+    };
+    test(lap2);
+    // assert adding works after clearing all usernames
+    args.clear();
+    args.push(["--au", "somebody"]);
+    let uargs1 = UpdateArgs {
+        config_path: Some(config_arg),
+        identity: Some(["--identity", "add new key"]),
+        args: Some(args.clone())
+    };
+
+    let a1 = ArgType::ShouldPass(&uargs1);
+    let p1 = TestParams {
+        ctx: format!("{} updating added key with 1 username", tinfo!()),
+        verbose: false,
+        args: a1
+    };
+    test(p1);
+    // assert findable by new username
+    let list_args = ListArgs::Find {
+        config_path: Some(config_path),
+        verbose: true,
+        args: Some(vec![["-U", "somebody"]]),
+    };
+    let la1 = ArgType::ShouldPass(&list_args);
+    let lap1 = TestParams {
+        ctx: format!("{} Check updated identity findable by new username", tinfo!()),
+        verbose: false,
+        args: la1,
+    };
+    test(lap1);
+
+
+    // changing identity
+    args.clear();
+    args.push(["--change-identity", "new key name"]);
+    let uargs1 = UpdateArgs {
+        config_path: Some(config_arg),
+        identity: Some(["--identity", "add new key"]),
+        args: Some(args.clone())
+    };
+
+    let a1 = ArgType::ShouldPass(&uargs1);
+    let p1 = TestParams {
+        ctx: format!("{} updating identity", tinfo!()),
+        verbose: false,
+        args: a1
+    };
+    test(p1);
+
+    // assert findable by new ID
+    let list_args = ListArgs::ByID {
+        config_path: Some(config_path),
+        verbose: true,
+        id: Some("new key name")
+    };
+    let la1 = ArgType::ShouldPass(&list_args);
+    let lap1 = TestParams {
+        ctx: format!("{} checking updated key is findable via list by ID", tinfo!()),
+        verbose: false,
+        args: la1,
+    };
+    test(lap1);
+    // assert old key gone
+    let list_args = ListArgs::ByID {
+        config_path: Some(config_path),
+        verbose: true,
+        id: Some("new key name")
+    };
+    let la1 = ArgType::ShouldFail(&list_args);
+    let lap1 = TestParams {
+        ctx: format!("{} checking old key is not findable via list by ID", tinfo!()),
+        verbose: false,
+        args: la1,
+    };
+    test(lap1);
+    // assert findable by username
+    // assert findable by new username
+    let list_args = ListArgs::Find {
+        config_path: Some(config_path),
+        verbose: true,
+        args: Some(vec![["-U", "somebody"]]),
+    };
+    let la1 = ArgType::ShouldPass(&list_args);
+    let lap1 = TestParams {
+        ctx: format!("{} Check new identity key findable by username", tinfo!()),
+        verbose: false,
+        args: la1,
+    };
+    test(lap1);
+
+
+    //
+    //
+    //
+    //
+    //
+    //
+    // // basic adding
+    // args.push(["-U", "some user"]);
+    // args.push(["-E", "some_email@x.com"]);
+    // let add_args = AddArgs {
+    //     config_path: Some(config_arg),
+    //     identity: Some(["--identity", "add new key"]),
+    //     args: Some(args.clone())
+    // };
+    //
+    // let a1 = ArgType::ShouldPass(&add_args);
+    // let p1 = TestParams {
+    //     ctx: String::from("a1: adding a new identity, 1 username 1 email"),
+    //     verbose: false,
+    //     args: a1
+    // };
+    // test(p1);
+    //
+    // // assert the added key is findable
+    // let list_args = ListArgs::ByID {
+    //     config_path: Some(config_path),
+    //     verbose: true,
+    //     id: Some("add new key")
+    // };
+    // let la1 = ArgType::ShouldPass(&list_args);
+    // let lap1 = TestParams {
+    //     ctx: String::from("Checking added key is findable via list by ID"),
+    //     verbose: false,
+    //     args: la1,
+    // };
+    // test(lap1);
+    //
+    // ---
+
+
+}
+
+
