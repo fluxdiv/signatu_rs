@@ -25,15 +25,6 @@ use utils::*;
 
 mod memmap;
 
-// ========== SIGNING
-// =XXX======== ADD-NEW (add a new identity to LAS)
-// =XXX======== UPDATE (update an existing identity in LAS)
-// =XXX======== DELETE (delete an entire identity)
-
-// Other TODO's
-// Handle manual config creation
-// Store config path in include_bytes!
-// Handle default uname/email
 
 fn main() -> Result<(), String> {
 
