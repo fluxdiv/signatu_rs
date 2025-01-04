@@ -1,0 +1,19 @@
+[package]
+name = "signatu_rs"
+version = "0.1.0"
+edition = "2021"
+authors = ["fluxdiv <156196590+fluxdiv@users.noreply.github.com>"]
+
+[dependencies]
+anyhow = "1.0.82"
+clap = "4.5.4"
+serde = { version = "1.0.209", features = ["derive"] }
+thiserror = "1.0.58"
+toml = "0.8.19"
+dirs = "5.0"
+serde_json = "1.0.133"
+memmap2 = "0.9.5"
+
+[[bin]]
+name = "sigrs"
+path = "src/main.rs"
