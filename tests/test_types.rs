@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{ops::Deref, process::Output};
 use core::panic;
 use std::process::Command;
 
@@ -6,7 +6,7 @@ use std::process::Command;
 pub const BIN_NAME: &'static str = "sigrs";
 
 /// generic testing function
-pub fn test<'a, ARGS>(params: TestParams<'a, ARGS>) 
+pub fn test<'a, ARGS>(params: TestParams<'a, ARGS>) -> Option<Output>
 where
     ARGS: Arguments<'a>
 {
@@ -32,6 +32,7 @@ where
                         println!("stdout: {}", stdout);
                         println!("stderr: {}", stderr);
                     }
+                    Some(out)
                 },
                 Ok(out) => {
                     // OS success but app fail
@@ -80,6 +81,7 @@ where
                         println!("stdout: {}", stdout);
                         println!("stderr: {}", stderr);
                     }
+                    Some(out)
                 },
                 Err(e) => {
                     // OS fail should panic
@@ -171,7 +173,9 @@ impl<'a> Arguments<'a> for UpdateArgs<'a> {
 
         if let Some(add_args) = &self.args {
             for arg in add_args.as_flattened() {
-                args.push(*arg);
+                if !arg.is_empty() {
+                    args.push(*arg);
+                }
             }
         }
         args
