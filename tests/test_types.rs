@@ -5,6 +5,7 @@ use std::process::Command;
 // Used across tests
 pub const BIN_NAME: &'static str = "sigrs";
 
+/// generic testing function
 pub fn test<'a, ARGS>(params: TestParams<'a, ARGS>) 
 where
     ARGS: Arguments<'a>
@@ -135,38 +136,23 @@ pub trait Arguments<'a> {
     }
 }
 
-// and now can do stuff like
-// test_list_find(ArgType::ShouldPass(some_ListArgs));
-// within test function, I assert pass/fail
-
-// pub fn example_test_list_fn<'a>(args: ArgType<'a, ListArgs<'a>>) {
-//     let z = match args {
-//         ArgType::ShouldPass(list_args) => {
-//             0 // Can assert the command run succeeds here
-//         },
-//         ArgType::ShouldFail(list_args) => {
-//             0 // Can assert the command run fails here
-//         }
-//     };
-// }
-
 // ========================= Updating Identities
 /// Arguments for "--update" (updating an existing identity)
 pub struct UpdateArgs<'a> {
     /// ["--config-path", "./Test.sigrs"]
-    config_path: Option<[&'a str; 2]>,
+    pub config_path: Option<[&'a str; 2]>,
     /// ["--identity", "some key"]
-    identity: Option<[&'a str; 2]>,
+    pub identity: Option<[&'a str; 2]>,
     /// Vec<
     /// ["--change-identity", "newid"],
     /// ["--au", "uname to add"], ["--ae", "email to add"],
     /// ["--ru", "removing username"], ["--re", "removing email"],
     /// ["--remove-all-emails"], ["--remove-all-usernames"]>
-    args: Option<Vec<[&'a str; 2]>>
+    pub args: Option<Vec<[&'a str; 2]>>
 }
 
 impl<'a> Arguments<'a> for UpdateArgs<'a> {
-    const CMD: &'static [&'static str] = &["--update"];
+    const CMD: &'static [&'static str] = &["update"];
 
     fn into_args(&self) -> Vec<&'a str> {
         let mut args: Vec<&'a str> = Vec::new();
@@ -191,7 +177,6 @@ impl<'a> Arguments<'a> for UpdateArgs<'a> {
         args
     }
 }
-
 
 // ========================= Adding Identities
 

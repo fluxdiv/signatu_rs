@@ -11,10 +11,10 @@ use list_tests::{
     test_list_by_id, test_list_find, test_list_all
 };
 mod las_modifications_tests;
-use las_modifications_tests::test_add_new;
-// use las_modifications_tests::{
-//     test_add_new
-// };
+use las_modifications_tests::{
+    test_add_new,
+    test_updates
+};
 const TEST_CONFIG_BASE_PATH: &'static str = "./tests/TestConfigBase.sigrs";
 
 /// Helper to install latest version of binary
@@ -78,6 +78,7 @@ fn test_group_list() {
 fn test_las_modifications() {
     let config = clone_test_config("./tests/LASMods.sigrs");
     test_add_new(config);
+    test_updates(config);
     // test updates
     // test deletes
     delete_test_config_clone(config);
