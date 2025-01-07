@@ -1,5 +1,8 @@
 // #![allow(unused_imports)]
 use std::ffi::OsString;
+use std::env::current_exe;
+use std::io::{self, Write};
+use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use clap::{
     value_parser,
     builder::NonEmptyStringValueParser,
@@ -25,14 +28,43 @@ use utils::*;
 
 mod memmap;
 
+// Here I need to read myself (std::env::current_exe()),
+// and parse the last bytes to get the config path
+
 
 fn main() -> Result<(), String> {
 
     let matches = sigrs_command().get_matches();
 
     match matches.subcommand() {
-
         // =============== General
+        Some(("get-bin-path", _)) => {
+            match std::env::current_exe() {
+                Ok(path) => {
+                    // write path to stdout as bytes
+                    // I believe these will be u8/u16 depending on OS without
+                    // needing conditional compilation 
+                    let path_bytes = path.as_os_str().as_bytes();
+                    let stdout = io::stdout();
+                    let mut lock = stdout.lock();
+                    lock.write_all(path_bytes)
+                        .map_err(|e| e.to_string())?;
+
+                    return Ok(());
+                },
+                Err(e) => {
+                    // write err to stderr as bytes
+                    let stderr = io::stderr();
+                    let mut lock = stderr.lock();
+                    let err = e.to_string();
+
+                    lock.write_all(err.as_bytes())
+                        .map_err(|e| e.to_string())?;
+
+                    return Ok(());
+                }
+            }
+        },
         Some(("las", _sub_matches)) => {
             println!("{}", LAS_HELP);
         },
@@ -79,11 +111,15 @@ fn main() -> Result<(), String> {
 
 pub fn sigrs_command() -> Command {
 
-    Command::new("sigrs")
-        .about("signatu_rs")
+    Command::new("sigrs_function")
+        .about("Primary functionality binary for signatu_rs. You probably didn't mean to execute this directly. Instead use `sigrs --help`")
         // .subcommand_required(true)
         .arg_required_else_help(true)
-        // ================================= NEW UNIFIED LAS INFO
+        // ================================= Misc
+        .subcommand(
+            Command::new("get-bin-path")
+                .long_flag("get-bin-path")
+        )
         .subcommand(
             Command::new("las")
                 // .about("Explanation of LAS / Local Author Storage")
