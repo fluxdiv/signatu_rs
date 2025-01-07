@@ -15,6 +15,21 @@ macro_rules! tinfo {
     };
 }
 
+
+#[test]
+fn get_bin_name() {
+    match std::env::current_exe() {
+        Ok(exe_path) => {
+            assert!(false, "Path of this executable is: {}", exe_path.display());
+            // println!("Path of this executable is: {}", exe_path.display());
+        },
+        Err(e) => {
+            assert!(false, "failed to get current exe path: {e}");
+            // println!("failed to get current exe path: {e}");
+        }
+    };
+}
+
 pub fn test_add_new(config_path: &str) {
     println!("=====================================================");
     println!("=========================================== add-new");

@@ -29,6 +29,19 @@ fn install_latest_binary() {
     assert!(status.success(), "Failed to install latest version of the binary");
 }
 
+#[test]
+fn xyz() {
+    let out = Command::new("sigrs")
+        .arg("list-all")
+        .arg("--help")
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let stderr = String::from_utf8_lossy(&out.stderr);
+
+    assert!(false, "stdout: {:?}  |  stderr: {:?}", stdout, stderr);
+}
+
 /// Creates a copy of `/tests/TestConfigBase.sigrs` at `into_path`
 /// Returns `into_path` if successful
 /// ex: `into_path: "./tests/ListTestCopy.sigrs"`
@@ -57,13 +70,12 @@ fn delete_test_config_clone(path: &str) {
 // =================================== Test groups
 // =======================================================
 
-// build && install latest binary, runs before other tests by itself
+// build && install latest binary, runs before other tests
 #[test]
 fn test_binstall() {
     install_latest_binary();
 }
 
-// the rest can let cargo parallelize as needed
 #[test]
 fn test_group_list() {
     let config = clone_test_config("./tests/ListTests.sigrs");

@@ -1,6 +1,7 @@
-/target/
-scratch.md
-IDEAS.md
+**/target/
+/core/scratch.md
+/core/IDEAS.md
 *.sigrs
 !/tests/TestConfigBase.sigrs
-
+*.md
+!/README.md

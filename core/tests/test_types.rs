@@ -3,7 +3,7 @@ use core::panic;
 use std::process::Command;
 
 // Used across tests
-pub const BIN_NAME: &'static str = "sigrs";
+pub const BIN_NAME: &'static str = "sigrs_function";
 
 /// generic testing function
 pub fn test<'a, ARGS>(params: TestParams<'a, ARGS>) -> Option<Output>
