@@ -1,5 +1,6 @@
 [package]
 name = "xtask"
+description = "Based on https://github.com/matklad/cargo-xtask"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

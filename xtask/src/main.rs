@@ -1,4 +1,3 @@
-// use core::panic;
 use std::{
     env,
     fs::File,
@@ -7,7 +6,7 @@ use std::{
     os::unix::ffi::OsStrExt,
     panic::resume_unwind,
     path::{Path, PathBuf},
-    process::{Command, Stdio},
+    process::Command,
     sync::Arc,
     thread
 };
@@ -32,7 +31,6 @@ fn build() -> Result<(), String> {
         .nth(1)
         .unwrap()
         .to_path_buf();
-    // project_root.push("core");
 
     let install_status = Command::new(cargo)
         .current_dir(&project_root)

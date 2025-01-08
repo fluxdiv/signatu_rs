@@ -22,11 +22,11 @@ pub unsafe fn get_memmap(args: &ArgMatches) -> Result<Mmap, String> {
     {
         // scoped to immediately drop File handle after creating memmap
         let handle = File::open(config_path)
-            .map_err(|_| String::from("Problem getting file handle"))?;
+            .map_err(|e| e.to_string())?;
 
         unsafe {
             Mmap::map(&handle)
-                .map_err(|_| String::from("Problem getting memory map"))
+                .map_err(|e| String::from("Problem getting memory map"))
         }
     }
 }
