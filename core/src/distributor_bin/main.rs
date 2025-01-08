@@ -7,80 +7,101 @@ use std::os::unix::ffi::OsStringExt;
 // use std::path::PathBuf;
 use clap::{
     value_parser,
-    // builder::NonEmptyStringValueParser,
     Arg,
-    // ArgAction,
-    // ArgGroup,
+    ArgAction,
     Command
 };
 use anyhow::Result;
 use std::process::{
-    Command as ProcessCommand,
+    Command as ProcessCommand, Stdio,
     // exit
 };
 
 fn main() -> Result<(), String> {
 
-    // includes bin name at idx 0
-    let matches = command()
-        .try_get_matches_from(args_os())
-        .map_err(|e| e.to_string())?;
+    // discards the first element, consumes 2nd (the subcommand)
+    let mut args = args_os();
+    let sub_cmd = args.nth(1);
+    let Some(sub_cmd) = sub_cmd else {
+        return Err(String::from("Argument required | try `sigrs --help`"));
+    };
 
-    // If no "set-config-path", forward everything to the functionality binary
-    let Some(cfg_path) = matches.get_one::<OsString>("set-config-path") else {
-        // pipe everything to `sigrs_functionality` except arg[0]
-        // skip binary name `sigrs`
-        let args: Vec<OsString> = std::env::args_os().skip(1).collect();
-        
-        let res = ProcessCommand::new("sigrs_function")
-            .args(args)
-            .output()
-            .map_err(|e| e.to_string())?;
+    match sub_cmd.to_string_lossy().as_ref() {
+        // continue
+        "set-config-path" => {},
+        _ => {
+            // pipe everything to sigrs_function
+            let mut oargs = vec![sub_cmd];
+            oargs.append(&mut args.collect::<Vec<OsString>>());
+            let res = ProcessCommand::new("sigrs_function")
+                .args(oargs)
+                .stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
+                .status()
+                .map_err(|e| e.to_string())?;
+            if !res.success() {
+                return Err(String::from(""));
+            }
+            return Ok(());
+        }
+    }
 
-        let stdout = String::from_utf8_lossy(&res.stdout);
-        let stderr = String::from_utf8_lossy(&res.stderr);
-        println!("sigrs_function stdout: {:?}", stdout);
-        println!();
-        println!("sigrs_function stderr: {:?}", stderr);
-
-        return Ok(());
+    let m = command().get_matches();
+    let Some(("set-config-path", sub_m)) = m.subcommand() else {
+        panic!("unreachable");
     };
 
     // cfg_path is the path to set
+    let Some(cfg_path) = sub_m.get_one::<OsString>("path") else {
+        return Err(String::from("--path required"));
+    };
 
-    // 1) call `sigrs_functionality get-bin-path`, read output from stdout
+    // call `sigrs_functionality get-bin-path`, read output from stdout
     let bin_path_res = ProcessCommand::new("sigrs_function")
         .arg("get-bin-path")
         .output()
         .map_err(|e| e.to_string())?;
-    println!("DISTRIBUTOR | sigrs_function stdout: {}", String::from_utf8_lossy(&bin_path_res.stdout));
-    println!("DISTRIBUTOR | sigrs_function stderr: {}", String::from_utf8_lossy(&bin_path_res.stderr));
-    // if !bin_path_res.stderr.is_empty() {
-    //     return Err(format!("Error getting bin path: {:?}", bin_path_res.stderr));
-    // }
-    // if bin_path_res.stdout.is_empty() {
-    //     return Err(String::from("No response when getting bin path"));
-    // }
+    // println!(
+    //     "DISTRIBUTOR | sigrs_function stdout: {}",
+    //     String::from_utf8_lossy(&bin_path_res.stdout)
+    // );
+    // println!(
+    //     "DISTRIBUTOR | sigrs_function stderr: {}",
+    //     String::from_utf8_lossy(&bin_path_res.stderr)
+    // );
+    if !bin_path_res.stderr.is_empty() {
+        return Err(format!(
+            "Error getting bin path: {:?}",
+            String::from_utf8_lossy(&bin_path_res.stderr)
+        ));
+    }
+    if bin_path_res.stdout.is_empty() {
+        return Err(String::from("No response from `sigrs_function get-bin-path`"));
+    }
 
-    // bin_path_res.stdout contains bytes of path
-    // let bin_path = PathBuf::from(OsString::from_vec(bin_path_res.stdout));
     let bin_path = OsString::from_vec(bin_path_res.stdout);
 
-    // now I have the bin path, I need to call "sigrs_modifier" with the 
-    // new cfg_path, plus the path to the binary
-    // - path_to_binary gets modified by
-    // - appending cfg_path.as_bytes() to the end of it
-
-    let mod_res = ProcessCommand::new("sigrs_modifier")
-        .arg("--bin-path")
+    let mut cmd = ProcessCommand::new("sigrs_modifier");
+    cmd.arg("--bin-path")
         .arg(bin_path)
         .arg("--new-cfg-path")
-        .arg(cfg_path)
-        .output()
-        .map_err(|e| e.to_string())?;
+        .arg(cfg_path);
 
-    println!("DISTRIBUTOR | sigrs_modifier stdout: {}", String::from_utf8_lossy(&mod_res.stdout));
-    println!("DISTRIBUTOR | sigrs_modifier stderr: {}", String::from_utf8_lossy(&mod_res.stderr));
+    if sub_m.get_flag("no-generate") {
+        cmd.arg("--no-generate");
+    }
+
+    let mod_res = cmd
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .status()
+        .map_err(|e| e.to_string())?;
+    if !mod_res.success() {
+        return Err(String::new());
+    }
+
+    // println!("DISTRIBUTOR | sigrs_modifier stdout: {}", String::from_utf8_lossy(&mod_res.stdout));
+    // println!("DISTRIBUTOR | sigrs_modifier stderr: {}", String::from_utf8_lossy(&mod_res.stderr));
     // if !mod_res.stderr.is_empty() {
     //     return Err(format!("Error calling sigrs_modifier: {:?}", bin_path_res.stderr));
     // }
@@ -88,28 +109,27 @@ fn main() -> Result<(), String> {
     //     return Err(String::from("No response from sigrs_modifier"));
     // }
 
-
-    // if let Some(cfg_path) = args.get_one::<OsString>("set-config-path") {
-    //     // cfg_path is the path
-    //     // extract new config path
-    //     //
-    //     // call `sigrs_function get-bin-path`
-    //     // read stdout, parse into OsString
-    //     //
-    //     // call `sigrs_modifier set-config-path --bin="bin.exe" --new="xxx.sigrs"`
-    //     Ok(())
-    // }
     Ok(())
-
 }
 
 fn command() -> Command {
     Command::new("sigrs")
         .about("sigrs")
-        .arg(
-            Arg::new("set-config-path")
-                .long("set-config-path")
-                .alias("scp")
-                .value_parser(value_parser!(OsString))
+        .color(clap::ColorChoice::Always)
+        .subcommand(
+            Command::new("set-config-path")
+                .arg_required_else_help(true)
+                .arg(
+                    Arg::new("path")
+                        .short('p')
+                        .required(true)
+                        .require_equals(true)
+                        .value_parser(value_parser!(OsString))
+                )
+                .arg(
+                    Arg::new("no-generate")
+                        .long("no-generate")
+                        .action(ArgAction::SetTrue)
+                )
         )
 }

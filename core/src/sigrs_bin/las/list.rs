@@ -25,7 +25,6 @@ pub unsafe fn handle_list(args: &ArgMatches) -> Result<(), String> {
     Ok(())
 }
 
-
 pub unsafe fn handle_list_by_id(args: &ArgMatches) -> Result<(), String> {
 
     let memmap_las = get_memmap(args)?;
